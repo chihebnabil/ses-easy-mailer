@@ -75,26 +75,32 @@ async function sendMail(
 /**
  * Loads a template from a file or SES.
  *
- * @param {string} templateType - The type of the template.
- * @param {string} templatePath - The path to the template.
+ * @param {string} templateType - The type of the template (file, ses, html, url).
+ * @param {string} template - The path to the template.
  * @param {Object} client - The SES client.
  * @returns {Promise<string>} The loaded template.
  * @throws {Error} Throws an error if loading the template fails.
  */
-async function loadTemplate(templateType, templatePath, client) {
-    let template = null;
+async function loadTemplate(templateType, template, client) {
+    let temp = null;
     try {
         if (templateType === "file") {
-            template = await fs.promises.readFile(templatePath, 'utf-8');
+            temp = await fs.promises.readFile(template, 'utf-8');
         } else if (templateType === "ses") {
-            let response = await client.send(new GetTemplateCommand({ TemplateName: templatePath }));
-            template = response.Template.HtmlPart;
+            let response = await client.send(new GetTemplateCommand({ TemplateName: template }));
+            temp = response.Template.HtmlPart;
+        } else if (templateType === "html") {
+            temp = template;
+        } else if (templateType === "url") {
+            temp = await fetch(template).then(res => res.text());
+        }else {
+            throw new Error(`Invalid template type: ${templateType}`);
         }
     } catch (error) {
         console.error(`Failed to load template: ${error}`);
         throw error;
     }
-    return template;
+    return temp;
 }
 
 

@@ -23,8 +23,14 @@ const client = new SESClient(
 );
 const transporter = createTransporter(client);
 ```
+One of the key features of the SES Easy Mailer module is its support for both file and SES templates. This gives developers the flexibility to choose the method that best suits their needs.
 
-### Using Local Html Template
+### Using a file Template
+If you prefer to keep your email templates as HTML files in your project, you can do so and SES Easy Mailer will handle the loading and rendering of these templates. This is great for developers who like to keep their templates version controlled with their code.
+
+Here's an example of how to send an email using a file template:
+
+
 ```javascript
 const from = 'sender@example.com';
 const to = 'recipient@example.com';
@@ -34,7 +40,7 @@ const templatePath = './template.html';
 const templateData = { name: 'John Doe' };
 const attachments = [];
 
-sendMail(
+await sendMail(
     transporter,
     from,
     subject,
@@ -43,11 +49,7 @@ sendMail(
     templateData,
     attachments,
     to
-).then(() => {
-    console.log('Email sent successfully!');
-}).catch((error) => {
-    console.error(`Failed to send email: ${error}`);
-});
+)
 ```
 
 In this example, template.html is a HTML file with placeholders in the format `{{ placeholder }}` . The templateData object is used to replace these placeholders with actual data.
@@ -60,7 +62,7 @@ In this example, template.html is a HTML file with placeholders in the format `{
 const templateType = 'ses';
 const templateName = 'se-template-name'; // The name of the template you created in SES
 
-sendMail(
+await sendMail(
     transporter,
     from,
     subject,
@@ -69,11 +71,7 @@ sendMail(
     templateData,
     attachments,
     to
-).then(() => {
-    console.log('Email sent successfully!');
-}).catch((error) => {
-    console.error(`Failed to send email: ${error}`);
-});
+)
 ```
 
 
@@ -96,3 +94,6 @@ let attachments = [
     }
 ]
 ```
+
+#### SES Unsupported File Types
+SES does not support all file types. If you try to send an email with an unsupported file type, SES will throw an error. You can find a list of supported file types [here](https://docs.aws.amazon.com/ses/latest/dg/mime-types.html).
