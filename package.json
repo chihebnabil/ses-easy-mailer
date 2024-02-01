@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "keywords": ["SES", "Amazon", "email", "mailer"],
   "author": "Chiheb Nabil",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-ses": "^3.503.1",
     "nodemailer": "^6.9.8"
