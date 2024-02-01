@@ -1,0 +1,22 @@
+{
+  "name": "ses-easy-mailer",
+  "version": "1.0.0",
+  "description": "A simple and easy-to-use mailer module for Amazon SES.",
+  "main": "src/main.js",
+  "keywords": ["SES", "Amazon", "email", "mailer"],
+  "author": "Chiheb Nabil",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.503.1",
+    "nodemailer": "^6.9.8"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chihebnabil/ses-easy-mailer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chihebnabil/ses-easy-mailer.git/issues"
+  },
+  "homepage": "https://github.com/chihebnabil/ses-easy-mailer.git#readme"
+}
