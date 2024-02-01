@@ -21,7 +21,7 @@ const client = new SESClient(
         secretAccessKey: "",
     }
 );
-const { transporter } = createTransporter(client);
+const transporter = createTransporter(client);
 ```
 
 ### Using Local Html Template
@@ -35,7 +35,7 @@ const templateData = { name: 'John Doe' };
 const attachments = [];
 
 sendMail(
-    { transporter, client },
+    transporter,
     from,
     subject,
     templateType,
@@ -61,7 +61,7 @@ const templateType = 'ses';
 const templateName = 'se-template-name'; // The name of the template you created in SES
 
 sendMail(
-    { transporter, client },
+    transporter,
     from,
     subject,
     templateType,
