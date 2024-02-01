@@ -85,7 +85,7 @@ async function loadTemplate(templateType, templatePath, client) {
     let template = null;
     try {
         if (templateType === "file") {
-            template = await fs.readFile(templatePath, 'utf-8');
+            template = await fs.promises.readFile(templatePath, 'utf-8');
         } else if (templateType === "ses") {
             let response = await client.send(new GetTemplateCommand({ TemplateName: templatePath }));
             template = response.Template.HtmlPart;

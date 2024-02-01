@@ -1,6 +1,6 @@
 {
   "name": "ses-easy-mailer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A simple and easy-to-use mailer module for Amazon SES.",
   "main": "src/main.js",
   "keywords": ["SES", "Amazon", "email", "mailer"],
