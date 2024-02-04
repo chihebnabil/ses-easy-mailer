@@ -60,7 +60,7 @@ In this example, template.html is a HTML file with placeholders in the format `{
 
 ```javascript
 const templateType = 'ses';
-const templateName = 'se-template-name'; // The name of the template you created in SES
+const templateName = 'ses-template-name'; // The name of the template you created in SES
 
 await sendMail(
     transporter,
@@ -73,6 +73,11 @@ await sendMail(
     to
 )
 ```
+If you are sending an SES template without attachments, the module will automatically use the `SendTemplatedEmailCommand`. 
+
+This is to avoid downloading the template with extra http call. 
+
+However, it's important to note that you must include all the data associated with the template in `templateData`. If any data is missing, the email will not be sent, even though AWS might indicate that it was sent successfully.
 
 
 ### Attachments

@@ -1,4 +1,4 @@
-const { SendRawEmailCommand, GetTemplateCommand } = require("@aws-sdk/client-ses");
+const { SendRawEmailCommand, GetTemplateCommand, SendTemplatedEmailCommand  } = require("@aws-sdk/client-ses");
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 
@@ -13,7 +13,7 @@ function createTransporter(client) {
         SES: {
             ses: client,
             aws: {
-                SendRawEmailCommand
+                SendRawEmailCommand,
             }
         }
     });
@@ -27,11 +27,11 @@ function createTransporter(client) {
 /**
  * Sends an email using the provided transporter.
  * 
- * @param {Object} An object containing the transporter and the client.
+ * @param {Object} transporter - object containing the transporter and the client.
  * @param {string} from - The email address to send from.
  * @param {string} subject - The subject of the email.
  * @param {string} [templateType="file"] - The type of the template. Defaults to "file".
- * @param {string} template - The path to the template to use for the email body.
+ * @param {string} template - the template (ses , path for the file , html string) to use for the email body.
  * @param {Object} templateData - The data to use in the template.
  * @param {Array} [attachments=[]] - An array of attachments to include in the email.
  * @param {string} to - The email address to send to.
@@ -47,6 +47,20 @@ async function sendMail(
     templateData,
     attachments = [],
     to) {
+
+    if (templateType === 'ses' && (!attachments || attachments.length === 0)) {
+        const command = new SendTemplatedEmailCommand({
+            Source: from,
+            Destination: {
+                ToAddresses: [
+                    to
+                ]
+            },
+            Template: templatPath,
+            TemplateData: JSON.stringify(templateData)
+        });
+        return await client.send(command);
+    }
 
     let template = await loadTemplate(templateType, templatPath, client);
     if (templateData) {
@@ -93,7 +107,7 @@ async function loadTemplate(templateType, template, client) {
             temp = template;
         } else if (templateType === "url") {
             temp = await fetch(template).then(res => res.text());
-        }else {
+        } else {
             throw new Error(`Invalid template type: ${templateType}`);
         }
     } catch (error) {
