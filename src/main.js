@@ -79,7 +79,7 @@ async function sendMail(
         mailOptions.attachments = attachments;
     }
     try {
-        await transporter.sendMail(mailOptions);
+        return await transporter.sendMail(mailOptions);
     } catch (error) {
         throw error;
     }
