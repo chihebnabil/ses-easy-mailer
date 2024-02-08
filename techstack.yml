@@ -1,0 +1,55 @@
+repo_name: chihebnabil/ses-easy-mailer
+report_id: 92a5e819bc289ac0396ce450dbce4c22
+version: 0.1
+repo_type: Public
+timestamp: '2024-02-08T19:19:40+00:00'
+requested_by: chihebnabil
+provider: github
+branch: main
+detected_tools_count: 4
+tools:
+- name: JavaScript
+  description: Lightweight, interpreted, object-oriented language with first-class
+    functions
+  website_url: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/1209/javascript.jpeg
+  detection_source_url: https://github.com/chihebnabil/ses-easy-mailer
+  detection_source: Repo Metadata
+- name: Git
+  description: Fast, scalable, distributed revision control system
+  website_url: http://git-scm.com/
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Version Control System
+  image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/chihebnabil/ses-easy-mailer
+  detection_source: Repo Metadata
+- name: npm
+  description: The package manager for JavaScript.
+  website_url: https://www.npmjs.com/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Front End Package Manager
+  image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
+  detection_source_url: https://github.com/chihebnabil/ses-easy-mailer/blob/main/package.json
+  detection_source: package.json
+  last_updated_by: Chiheb Nabil
+  last_updated_on: 2024-02-01 10:34:28.000000000 Z
+- name: Nodemailer
+  description: A module for Node.js applications to allow email sending
+  website_url: http://www.nodemailer.com/
+  open_source: true
+  hosted_saas: false
+  category: Communications
+  sub_category: Transactional Email
+  image_url: https://img.stackshare.io/service/2862/qr2-jCLr.jpg
+  detection_source_url: https://github.com/chihebnabil/ses-easy-mailer/blob/main/package.json
+  detection_source: package.json
+  last_updated_by: Chiheb Nabil
+  last_updated_on: 2024-02-01 10:34:28.000000000 Z
