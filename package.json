@@ -1,7 +1,7 @@
 {
   "name": "ses-easy-mailer",
-  "version": "1.0.4",
-  "description": "A simple and easy-to-use mailer module for Amazon SES.",
+  "version": "2.0.0",
+  "description": "A powerful Amazon SES email wrapper for Node.js with built-in support for SES templates, file templates, attachments, and bulk sending. Perfect for transactional emails and newsletters.",
   "main": "src/main.js",
   "keywords": ["SES", "Amazon", "email", "mailer"],
   "author": "Chiheb Nabil",

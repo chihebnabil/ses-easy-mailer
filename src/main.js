@@ -1,140 +1,134 @@
-const { SendRawEmailCommand, GetTemplateCommand, SendTemplatedEmailCommand  } = require("@aws-sdk/client-ses");
+const { SendRawEmailCommand, GetTemplateCommand, SendTemplatedEmailCommand } = require("@aws-sdk/client-ses");
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 
-/**
- * Creates a Nodemailer transporter using the provided SES client.
- *
- * @param {SESClient} client - The SES client to use for sending emails.
- * @returns {Object} An object containing the transporter and the client.
- */
-function createTransporter(client) {
-    const transporter = nodemailer.createTransport({
-        SES: {
-            ses: client,
-            aws: {
-                SendRawEmailCommand,
-            }
-        }
-    });
-    return {
-        transporter,
-        client
-    };
-}
-
-
-/**
- * Sends an email using the provided transporter.
- * 
- * @param {Object} transporter - object containing the transporter and the client.
- * @param {string} from - The email address to send from.
- * @param {string} subject - The subject of the email.
- * @param {string} [templateType="file"] - The type of the template. Defaults to "file".
- * @param {string} template - the template (ses , path for the file , html string) to use for the email body.
- * @param {Object} templateData - The data to use in the template.
- * @param {Array} [attachments=[]] - An array of attachments to include in the email.
- * @param {string} to - The email address to send to.
- * @returns {Promise} A promise that resolves when the email has been sent.
- * @throws {Error} Throws an error if sending the email fails.
- */
-async function sendMail(
-    { transporter, client },
-    from,
-    subject,
-    templateType = "file",
-    templatPath,
-    templateData,
-    attachments = [],
-    to) {
-
-    if (templateType === 'ses' && (!attachments || attachments.length === 0)) {
-        const command = new SendTemplatedEmailCommand({
-            Source: from,
-            Destination: {
-                ToAddresses: [
-                    to
-                ]
-            },
-            Template: templatPath,
-            TemplateData: JSON.stringify(templateData)
+class SESMailer {
+    constructor(client) {
+        this.client = client;
+        this.transporter = nodemailer.createTransport({
+            SES: { ses: client, aws: { SendRawEmailCommand } }
         });
-        return await client.send(command);
+        this.defaultFrom = null;
     }
 
-    let template = await loadTemplate(templateType, templatPath, client);
-    if (templateData) {
-        template = replacePlaceholders(template, templateData);
+    setDefaultSender(email) {
+        this.defaultFrom = email;
+        return this;
     }
 
+    async sendTemplate(options) {
+        const {
+            from = this.defaultFrom,
+            to,
+            cc,
+            bcc,
+            subject,
+            templateName,
+            templateData = {},
+            attachments = []
+        } = options;
 
-    let mailOptions = {
-        from: from,
-        to: to,
-        subject: subject,
-        html: template,
-    };
+        if (!from) throw new Error('From address is required');
+        if (!to && !cc && !bcc) throw new Error('At least one recipient is required');
 
-    if (attachments.length > 0) {
-        mailOptions.attachments = attachments;
-    }
-    try {
-        return await transporter.sendMail(mailOptions);
-    } catch (error) {
-        throw error;
-    }
-}
+        const destination = {
+            ToAddresses: Array.isArray(to) ? to : [to],
+            ...(cc && { CcAddresses: Array.isArray(cc) ? cc : [cc] }),
+            ...(bcc && { BccAddresses: Array.isArray(bcc) ? bcc : [bcc] })
+        };
 
-
-/**
- * Loads a template from a file or SES.
- *
- * @param {string} templateType - The type of the template (file, ses, html, url).
- * @param {string} template - The path to the template.
- * @param {Object} client - The SES client.
- * @returns {Promise<string>} The loaded template.
- * @throws {Error} Throws an error if loading the template fails.
- */
-async function loadTemplate(templateType, template, client) {
-    let temp = null;
-    try {
-        if (templateType === "file") {
-            temp = await fs.promises.readFile(template, 'utf-8');
-        } else if (templateType === "ses") {
-            let response = await client.send(new GetTemplateCommand({ TemplateName: template }));
-            temp = response.Template.HtmlPart;
-        } else if (templateType === "html") {
-            temp = template;
-        } else if (templateType === "url") {
-            temp = await fetch(template).then(res => res.text());
-        } else {
-            throw new Error(`Invalid template type: ${templateType}`);
+        if (!attachments.length) {
+            const command = new SendTemplatedEmailCommand({
+                Source: from,
+                Destination: destination,
+                Template: templateName,
+                TemplateData: JSON.stringify(templateData)
+            });
+            return this.client.send(command);
         }
-    } catch (error) {
-        console.error(`Failed to load template: ${error}`);
-        throw error;
+
+        const template = await this._loadSESTemplate(templateName);
+        return this.sendRawEmail({
+            from,
+            to,
+            cc,
+            bcc,
+            subject,
+            html: this._replacePlaceholders(template, templateData),
+            attachments
+        });
     }
-    return temp;
+
+    async sendRawEmail(options) {
+        const {
+            from = this.defaultFrom,
+            to,
+            cc,
+            bcc,
+            subject,
+            html,
+            text,
+            attachments = []
+        } = options;
+
+        if (!from) throw new Error('From address is required');
+        if (!to && !cc && !bcc) throw new Error('At least one recipient is required');
+
+        const mailOptions = {
+            from,
+            subject,
+            html,
+            text,
+            attachments,
+            ...(to && { to: Array.isArray(to) ? to.join(',') : to }),
+            ...(cc && { cc: Array.isArray(cc) ? cc.join(',') : cc }),
+            ...(bcc && { bcc: Array.isArray(bcc) ? bcc.join(',') : bcc })
+        };
+
+        return this.transporter.sendMail(mailOptions);
+    }
+
+    async sendFileTemplate(options) {
+        const {
+            from = this.defaultFrom,
+            to,
+            cc,
+            bcc,
+            subject,
+            templatePath,
+            templateData = {},
+            attachments = []
+        } = options;
+
+        const template = await this._loadFileTemplate(templatePath);
+        return this.sendRawEmail({
+            from,
+            to,
+            cc,
+            bcc,
+            subject,
+            html: this._replacePlaceholders(template, templateData),
+            attachments
+        });
+    }
+
+    async _loadSESTemplate(templateName) {
+        const response = await this.client.send(
+            new GetTemplateCommand({ TemplateName: templateName })
+        );
+        return response.Template.HtmlPart;
+    }
+
+    async _loadFileTemplate(templatePath) {
+        return fs.promises.readFile(templatePath, 'utf-8');
+    }
+
+    _replacePlaceholders(template, data) {
+        return template.replace(/{{\s*[\w]+?\s*}}/g, (placeholder) => {
+            const key = placeholder.replace(/[{}]+/g, "").trim();
+            return data[key] ?? '';
+        });
+    }
 }
 
-
-
-/**
- * Replaces placeholders in the template with the corresponding values from the templateData.
- *
- * @param {string} template - The template string with placeholders.
- * @param {Object} templateData - The data to use for replacing placeholders.
- * @returns {string} The template string with placeholders replaced by actual data.
- */
-function replacePlaceholders(template, templateData) {
-    return template.replace(/{{\s*[\w]+?\s*}}/g, (placeholder) => {
-        const key = placeholder.replace(/[{}]+/g, "").trim();
-        return templateData[key];
-    });
-}
-
-
-module.exports = {
-    createTransporter,
-    sendMail
-};
+module.exports = SESMailer;

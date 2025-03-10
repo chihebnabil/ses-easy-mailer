@@ -1,6 +1,16 @@
 # SES Easy Mailer
 
-A simple and easy-to-use mailer module for Amazon SES.
+A powerful Node.js wrapper for Amazon Simple Email Service (SES) that simplifies sending transactional emails and newsletters. Built specifically for AWS SES, it provides:
+
+- 📧 Easy integration with Amazon SES templates
+- 📁 Support for local HTML templates
+- 👥 Bulk email sending with CC/BCC support
+- 📎 File attachments handling
+- ⚡ Optimized SES API usage
+- 🔄 Template variable substitution
+- 🚀 Promise-based async/await API
+
+Perfect for applications needing to send transactional emails, newsletters, or any automated email communication through Amazon SES.
 
 ## Installation
 
@@ -8,97 +18,123 @@ A simple and easy-to-use mailer module for Amazon SES.
 npm install ses-easy-mailer
 ```
 
-## Usage
+## Basic Usage
 
 ```javascript
-const { createTransporter, sendMail } = require('ses-easy-mailer');
+const SESMailer = require('ses-easy-mailer');
 const { SESClient } = require('@aws-sdk/client-ses');
 
-const client = new SESClient(
+// Initialize SES client
+const client = new SESClient({
     region: "us-east-1",
     credentials: {
-        accessKeyId: "",
-        secretAccessKey: "",
+        accessKeyId: "YOUR_KEY",
+        secretAccessKey: "YOUR_SECRET",
     }
-);
-const transporter = createTransporter(client);
+});
+
+// Create mailer instance
+const mailer = new SESMailer(client);
+
+// Optional: Set default sender
+mailer.setDefaultSender('no-reply@yourdomain.com');
 ```
-One of the key features of the SES Easy Mailer module is its support for both file and SES templates. This gives developers the flexibility to choose the method that best suits their needs.
 
-### Using a file Template
-If you prefer to keep your email templates as HTML files in your project, you can do so and SES Easy Mailer will handle the loading and rendering of these templates. This is great for developers who like to keep their templates version controlled with their code.
+## Sending Emails
 
-Here's an example of how to send an email using a file template:
-
+### Using SES Templates
 
 ```javascript
-const from = 'sender@example.com';
-const to = 'recipient@example.com';
-const subject = 'Hello, world!';
-const templateType = 'file';
-const templatePath = './template.html';
-const templateData = { name: 'John Doe' };
-const attachments = [];
-
-await sendMail(
-    transporter,
-    from,
-    subject,
-    templateType,
-    templatePath,
-    templateData,
-    attachments,
-    to
-)
+await mailer.sendTemplate({
+    from: 'sender@example.com',          // Optional if default sender is set
+    to: 'recipient@example.com',         // String or array for multiple recipients
+    cc: ['cc1@example.com'],            // Optional
+    bcc: 'bcc@example.com',             // Optional
+    subject: 'Welcome!',
+    templateName: 'WelcomeTemplate',     // Your SES template name
+    templateData: {                      // Data for template variables
+        name: 'John',
+        company: 'Acme Inc'
+    }
+});
 ```
 
-In this example, template.html is a HTML file with placeholders in the format `{{ placeholder }}` . The templateData object is used to replace these placeholders with actual data.
-
-
-
-### Using SES Template
+### Using File Templates
 
 ```javascript
-const templateType = 'ses';
-const templateName = 'ses-template-name'; // The name of the template you created in SES
-
-await sendMail(
-    transporter,
-    from,
-    subject,
-    templateType,
-    templateName,
-    templateData,
-    attachments,
-    to
-)
+await mailer.sendFileTemplate({
+    to: ['user1@example.com', 'user2@example.com'],
+    subject: 'Monthly Newsletter',
+    templatePath: './templates/newsletter.html',
+    templateData: {
+        month: 'January',
+        highlights: 'New Features'
+    },
+    attachments: [{
+        filename: 'report.pdf',
+        content: Buffer.from(/* your pdf data */),
+        encoding: 'base64'
+    }]
+});
 ```
-If you are sending an SES template without attachments, the module will automatically use the `SendTemplatedEmailCommand`. 
 
-This is to avoid downloading the template with extra http call. 
+### Sending Raw Emails
 
-However, it's important to note that you must include all the data associated with the template in `templateData`. If any data is missing, the email will not be sent, even though AWS might indicate that it was sent successfully.
+```javascript
+await mailer.sendRawEmail({
+    to: 'recipient@example.com',
+    subject: 'Quick Update',
+    html: '<h1>Hello!</h1><p>This is a test email.</p>',
+    text: 'Hello! This is a test email.' // Optional plain text version
+});
+```
 
+## API Reference
+
+### Constructor
+```javascript
+const mailer = new SESMailer(sesClient);
+```
+
+### Methods
+
+#### setDefaultSender(email)
+Sets a default sender email address for all emails.
+```javascript
+mailer.setDefaultSender('no-reply@yourdomain.com');
+```
+
+#### sendTemplate(options)
+Sends an email using an SES template.
+- `options`:
+  - `from`: Sender email (optional if default set)
+  - `to`: Recipient(s) email (string or array)
+  - `cc`: CC recipient(s) (optional, string or array)
+  - `bcc`: BCC recipient(s) (optional, string or array)
+  - `subject`: Email subject
+  - `templateName`: Name of the SES template
+  - `templateData`: Object containing template variables
+  - `attachments`: Array of attachment objects (optional)
+
+#### sendFileTemplate(options)
+Sends an email using an HTML file template.
+- Options same as above, but uses `templatePath` instead of `templateName`
+
+#### sendRawEmail(options)
+Sends a raw email with HTML/text content.
+- Options same as above, but uses `html` and/or `text` instead of template options
 
 ### Attachments
-
-if you want to attach files to your email, you can pass an array of objects to the attachments parameter. Each object must have the following properties:
-
-- filename: The name of the file to be attached.
-- content (Buffer): The content of the file to be attached.
-- encoding: The encoding of the file data. Defaults to 'base64'.
-
+Attachment objects should follow this format:
 ```javascript
-let buffer = Buffer.from("hello world!", "utf-8");
-
-let attachments = [
-    {
-        filename: "test.txt",
-        content: buffer,
-        encoding: "base64",
-    }
-]
+{
+    filename: 'document.pdf',
+    content: Buffer.from(/* file content */),
+    encoding: 'base64'  // Optional, defaults to base64
+}
 ```
 
-#### SES Unsupported File Types
-SES does not support all file types. If you try to send an email with an unsupported file type, SES will throw an error. You can find a list of supported file types [here](https://docs.aws.amazon.com/ses/latest/dg/mime-types.html).
+## Notes
+- SES has [limitations on attachment types](https://docs.aws.amazon.com/ses/latest/dg/mime-types.html)
+- Template placeholders use `{{variableName}}` syntax
+- When using SES templates without attachments, the module uses `SendTemplatedEmailCommand` for better performance
