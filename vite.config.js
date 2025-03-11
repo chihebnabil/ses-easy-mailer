@@ -9,7 +9,11 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'cjs'}`,
     },
     rollupOptions: {
-      external: ['@aws-sdk/client-ses', 'nodemailer', 'fs']
+      external: ['@aws-sdk/client-ses', 'nodemailer', 'fs'],
+      output: {
+        exports: 'default',
+        interop: 'auto'
+      }
     },
     sourcemap: true,
     minify: false

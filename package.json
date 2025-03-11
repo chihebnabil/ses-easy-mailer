@@ -24,7 +24,9 @@
   "scripts": {
     "build": "vite build",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test:esm": "node test-imports/esm/test.js",
+    "test:cjs": "node test-imports/cjs/test.cjs"
   },
   "devDependencies": {
     "jest": "^29.7.0",

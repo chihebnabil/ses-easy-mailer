@@ -1,6 +1,6 @@
-const { SendRawEmailCommand, GetTemplateCommand, SendTemplatedEmailCommand } = require("@aws-sdk/client-ses");
-const nodemailer = require('nodemailer');
-const fs = require('fs');
+import { SendRawEmailCommand, GetTemplateCommand, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
+import nodemailer from 'nodemailer';
+import { promises as fs } from 'fs';
 
 class SESMailer {
     constructor(client) {
