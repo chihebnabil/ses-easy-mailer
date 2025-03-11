@@ -131,12 +131,4 @@ class SESMailer {
     }
 }
 
-module.exports = SESMailer;
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SESMailer;
-} else {
-    exports.SESMailer = SESMailer;
-}
-
-// Support for import syntax
 export default SESMailer;

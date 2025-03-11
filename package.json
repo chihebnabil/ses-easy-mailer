@@ -1,13 +1,13 @@
 {
   "name": "ses-easy-mailer",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A powerful Amazon SES email wrapper for Node.js with built-in support for SES templates, file templates, attachments, and bulk sending. Perfect for transactional emails and newsletters.",
-  "main": "src/main.js",
-  "module": "src/main.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
   "exports": {
     ".": {
-      "require": "./src/main.js",
-      "import": "./src/main.js"
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
     }
   },
   "type": "module",
@@ -18,12 +18,19 @@
     "@aws-sdk/client-ses": "^3.503.1",
     "nodemailer": "^6.9.8"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "jest"
+    "build": "vite build",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "@babel/preset-env": "^7.23.8"
+    "@babel/preset-env": "^7.23.8",
+    "vite": "^5.0.0",
+    "@types/node": "^20.0.0"
   },
   "repository": {
     "type": "git",
