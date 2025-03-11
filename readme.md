@@ -20,9 +20,17 @@ npm install ses-easy-mailer
 
 ## Basic Usage
 
+### CommonJS
 ```javascript
 const SESMailer = require('ses-easy-mailer');
 const { SESClient } = require('@aws-sdk/client-ses');
+```
+
+### ES Modules
+```javascript
+import SESMailer from 'ses-easy-mailer';
+import { SESClient } from '@aws-sdk/client-ses';
+```
 
 // Initialize SES client
 const client = new SESClient({
@@ -38,7 +46,6 @@ const mailer = new SESMailer(client);
 
 // Optional: Set default sender
 mailer.setDefaultSender('no-reply@yourdomain.com');
-```
 
 ## Sending Emails
 

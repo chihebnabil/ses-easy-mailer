@@ -120,7 +120,7 @@ class SESMailer {
     }
 
     async _loadFileTemplate(templatePath) {
-        return fs.promises.readFile(templatePath, 'utf-8');
+        return fs.readFile(templatePath, 'utf-8');
     }
 
     _replacePlaceholders(template, data) {
@@ -132,3 +132,11 @@ class SESMailer {
 }
 
 module.exports = SESMailer;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SESMailer;
+} else {
+    exports.SESMailer = SESMailer;
+}
+
+// Support for import syntax
+export default SESMailer;
