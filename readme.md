@@ -32,7 +32,8 @@ import SESMailer from 'ses-easy-mailer';
 import { SESClient } from '@aws-sdk/client-ses';
 ```
 
-// Initialize SES client
+## Initialize SES client
+```javascript
 const client = new SESClient({
     region: "us-east-1",
     credentials: {
@@ -40,13 +41,14 @@ const client = new SESClient({
         secretAccessKey: "YOUR_SECRET",
     }
 });
-
-// Create mailer instance
+```
+## Create mailer instance
+```javascript
 const mailer = new SESMailer(client);
 
 // Optional: Set default sender
 mailer.setDefaultSender('no-reply@yourdomain.com');
-
+```
 ## Sending Emails
 
 ### Using SES Templates
