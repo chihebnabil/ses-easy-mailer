@@ -1,88 +1,181 @@
-import { jest } from '@jest/globals';
 import SESMailer from '../src/main.js';
 
-// Mock AWS SES client
+// Mock SES client
 const mockSend = jest.fn();
-const mockClient = {
+const mockSESClient = {
     send: mockSend
 };
-
-// Mock nodemailer
-jest.mock('nodemailer', () => ({
-    createTransport: jest.fn().mockReturnValue({
-        sendMail: jest.fn().mockResolvedValue({ messageId: 'test-id' })
-    })
-}));
 
 describe('SESMailer', () => {
     let mailer;
 
     beforeEach(() => {
-        mailer = new SESMailer(mockClient);
-        jest.clearAllMocks();
-    });
-
-    describe('constructor', () => {
-        test('should create instance with client', () => {
-            expect(mailer).toBeInstanceOf(SESMailer);
-            expect(mailer.client).toBe(mockClient);
-        });
+        mailer = new SESMailer(mockSESClient);
+        mockSend.mockClear();
     });
 
     describe('setDefaultSender', () => {
-        test('should set default sender', () => {
+        it('should set default sender email', () => {
             const email = 'test@example.com';
-            mailer.setDefaultSender(email);
+            const result = mailer.setDefaultSender(email);
+            expect(result).toBe(mailer);
             expect(mailer.defaultFrom).toBe(email);
         });
     });
 
     describe('sendTemplate', () => {
-        test('should send template email without attachments', async () => {
-            mockSend.mockResolvedValueOnce({ MessageId: 'test-id' });
-
-            await mailer.sendTemplate({
-                from: 'sender@test.com',
-                to: 'recipient@test.com',
+        it('should send templated email without attachments', async () => {
+            const options = {
+                from: 'sender@example.com',
+                to: 'recipient@example.com',
                 subject: 'Test',
                 templateName: 'TestTemplate',
                 templateData: { name: 'John' }
-            });
+            };
 
-            expect(mockSend).toHaveBeenCalledTimes(1);
-            expect(mockSend.mock.calls[0][0].input).toMatchObject({
-                Source: 'sender@test.com',
-                Template: 'TestTemplate'
-            });
+            await mailer.sendTemplate(options);
+
+            expect(mockSend).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    input: {
+                        Source: options.from,
+                        Destination: {
+                            ToAddresses: [options.to]
+                        },
+                        Template: options.templateName,
+                        TemplateData: JSON.stringify(options.templateData)
+                    }
+                })
+            );
         });
 
-        test('should throw error if no recipient', async () => {
-            await expect(mailer.sendTemplate({
-                from: 'sender@test.com',
-                subject: 'Test'
-            })).rejects.toThrow('At least one recipient is required');
+        it('should send raw email when attachments are present', async () => {
+            const templateHtml = '<h1>Hello {{name}}</h1>';
+            mockSend.mockImplementationOnce(() => ({
+                Template: { HtmlPart: templateHtml }
+            }));
+
+            const options = {
+                from: 'sender@example.com',
+                to: 'recipient@example.com',
+                subject: 'Test',
+                templateName: 'TestTemplate',
+                templateData: { name: 'John' },
+                attachments: [{
+                    filename: 'test.txt',
+                    content: 'Hello World'
+                }]
+            };
+
+            await mailer.sendTemplate(options);
+
+            expect(mockSend).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    input: { TemplateName: options.templateName }
+                })
+            );
+
+            // Verify the second call for raw email
+            expect(mockSend).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    input: expect.objectContaining({
+                        RawMessage: expect.any(Object)
+                    })
+                })
+            );
         });
     });
 
     describe('sendRawEmail', () => {
-        test('should send raw email', async () => {
+        it('should send raw email with HTML content', async () => {
             const options = {
-                from: 'sender@test.com',
-                to: 'recipient@test.com',
+                from: 'sender@example.com',
+                to: 'recipient@example.com',
                 subject: 'Test',
-                html: '<p>Test</p>'
+                html: '<h1>Hello</h1>'
             };
 
             await mailer.sendRawEmail(options);
 
-            expect(mailer.transporter.sendMail).toHaveBeenCalledWith(
+            expect(mockSend).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    from: options.from,
-                    to: options.to,
-                    subject: options.subject,
-                    html: options.html
+                    input: {
+                        RawMessage: {
+                            Data: expect.any(Uint8Array)
+                        }
+                    }
                 })
             );
+        });
+
+        it('should send raw email with text content', async () => {
+            const options = {
+                from: 'sender@example.com',
+                to: 'recipient@example.com',
+                subject: 'Test',
+                text: 'Hello'
+            };
+
+            await mailer.sendRawEmail(options);
+
+            expect(mockSend).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    input: {
+                        RawMessage: {
+                            Data: expect.any(Uint8Array)
+                        }
+                    }
+                })
+            );
+        });
+
+        it('should send raw email with attachments', async () => {
+            const options = {
+                from: 'sender@example.com',
+                to: 'recipient@example.com',
+                subject: 'Test',
+                html: '<h1>Hello</h1>',
+                attachments: [{
+                    filename: 'test.txt',
+                    content: 'Hello World'
+                }]
+            };
+
+            await mailer.sendRawEmail(options);
+
+            expect(mockSend).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    input: {
+                        RawMessage: {
+                            Data: expect.any(Uint8Array)
+                        }
+                    }
+                })
+            );
+        });
+
+        it('should throw error when no recipients specified', async () => {
+            const options = {
+                from: 'sender@example.com',
+                subject: 'Test',
+                html: '<h1>Hello</h1>'
+            };
+
+            await expect(mailer.sendRawEmail(options))
+                .rejects
+                .toThrow('At least one recipient is required');
+        });
+
+        it('should throw error when no sender specified', async () => {
+            const options = {
+                to: 'recipient@example.com',
+                subject: 'Test',
+                html: '<h1>Hello</h1>'
+            };
+
+            await expect(mailer.sendRawEmail(options))
+                .rejects
+                .toThrow('From address is required');
         });
     });
 });

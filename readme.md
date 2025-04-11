@@ -2,6 +2,7 @@
 
 A powerful Node.js wrapper for Amazon Simple Email Service (SES) that simplifies sending transactional emails and newsletters. Built specifically for AWS SES, it provides:
 
+- ☁️ Worker Enviroment compatible (Like Cloudflare)
 - 📧 Easy integration with Amazon SES templates
 - 📁 Support for local HTML templates
 - 👥 Bulk email sending with CC/BCC support
