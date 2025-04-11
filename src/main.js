@@ -85,14 +85,14 @@ class SESMailer {
             text,
             attachments
         });
-        
+
         // Send raw email using AWS SES
         const command = new SendRawEmailCommand({
             RawMessage: {
                 Data: rawMessage
             }
         });
-        
+
         return this.client.send(command);
     }
 
@@ -137,41 +137,41 @@ class SESMailer {
     _createRawEmailMessage({ from, to, cc, bcc, subject, html, text, attachments }) {
         // Implementation of MIME message creation
         // This replaces nodemailer's functionality
-        
+
         // Generate a boundary for multipart messages
         const boundary = `----_Part_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Prepare headers
         let headers = [
             `From: ${from}`,
             `Subject: ${subject}`,
             `MIME-Version: 1.0`
         ];
-        
+
         if (to.length) headers.push(`To: ${to.join(', ')}`);
         if (cc.length) headers.push(`Cc: ${cc.join(', ')}`);
         if (bcc.length) headers.push(`Bcc: ${bcc.join(', ')}`);
-        
+
         // Simple email without attachments
         if (!attachments.length) {
             if (html && text) {
                 // Both HTML and plain text
                 headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
-                
+
                 let message = headers.join('\r\n') + '\r\n\r\n';
-                
+
                 // Add text part
                 message += `--${boundary}\r\n`;
                 message += `Content-Type: text/plain; charset=utf-8\r\n\r\n`;
                 message += `${text}\r\n\r\n`;
-                
+
                 // Add HTML part
                 message += `--${boundary}\r\n`;
                 message += `Content-Type: text/html; charset=utf-8\r\n\r\n`;
                 message += `${html}\r\n\r\n`;
-                
+
                 message += `--${boundary}--\r\n`;
-                
+
                 return new TextEncoder().encode(message);
             } else if (html) {
                 // HTML only
@@ -183,30 +183,30 @@ class SESMailer {
                 return new TextEncoder().encode(headers.join('\r\n') + '\r\n\r\n' + (text || ''));
             }
         }
-        
+
         // Email with attachments (multipart/mixed)
         const mixedBoundary = `----_MixedPart_${Math.random().toString(36).substr(2, 9)}`;
         headers.push(`Content-Type: multipart/mixed; boundary="${mixedBoundary}"`);
-        
+
         let message = headers.join('\r\n') + '\r\n\r\n';
-        
+
         // Add content part (either text, HTML, or both)
         message += `--${mixedBoundary}\r\n`;
-        
+
         if (html && text) {
             // Both HTML and plain text
             message += `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n`;
-            
+
             // Add text part
             message += `--${boundary}\r\n`;
             message += `Content-Type: text/plain; charset=utf-8\r\n\r\n`;
             message += `${text}\r\n\r\n`;
-            
+
             // Add HTML part
             message += `--${boundary}\r\n`;
             message += `Content-Type: text/html; charset=utf-8\r\n\r\n`;
             message += `${html}\r\n\r\n`;
-            
+
             message += `--${boundary}--\r\n\r\n`;
         } else if (html) {
             // HTML only
@@ -217,19 +217,19 @@ class SESMailer {
             message += `Content-Type: text/plain; charset=utf-8\r\n\r\n`;
             message += `${text || ''}\r\n\r\n`;
         }
-        
+
         // Add attachments
         for (const attachment of attachments) {
             const { filename, content, contentType = 'application/octet-stream' } = attachment;
-            
+
             message += `--${mixedBoundary}\r\n`;
             message += `Content-Type: ${contentType}; name="${filename}"\r\n`;
             message += `Content-Disposition: attachment; filename="${filename}"\r\n`;
-            
+
             // For binary attachments, we need to encode them as base64
             if (content instanceof ArrayBuffer || content instanceof Uint8Array) {
                 message += `Content-Transfer-Encoding: base64\r\n\r\n`;
-                
+
                 // Convert binary data to base64
                 const base64Content = this._arrayBufferToBase64(content);
                 message += `${base64Content}\r\n\r\n`;
@@ -239,22 +239,22 @@ class SESMailer {
                 message += `${btoa(content)}\r\n\r\n`;
             }
         }
-        
+
         message += `--${mixedBoundary}--`;
-        
+
         return new TextEncoder().encode(message);
     }
-    
+
     _arrayBufferToBase64(buffer) {
         // Convert ArrayBuffer to Base64
         let binary = '';
         const bytes = new Uint8Array(buffer);
         const len = bytes.byteLength;
-        
+
         for (let i = 0; i < len; i++) {
             binary += String.fromCharCode(bytes[i]);
         }
-        
+
         return btoa(binary);
     }
 }
